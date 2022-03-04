@@ -1,0 +1,45 @@
+.card {
+  width: 275px;
+
+}
+
+.preview {
+  width: 225px;
+  padding: 10px;
+  box-sizing: content-box;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  height: 75px;
+  width: 100%;
+}
+
+/* collapse borders */
+.cell:first-of-type {
+  position: relative;
+  left: 1px;
+}
+.cell:last-of-type {
+  position: relative;
+  left: -1px;
+}
+
+.cell {
+  border: 1px solid black;
+  margin:-1px 0 0 -1px;
+  width: 75px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 32pt;
+}
+
+#buttons button {
+  width: 60px;
+}
+
+#return{
+  width: 275px;
+}

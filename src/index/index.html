@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic-Tac-Toe Login</title>
+</head>
+
+<body class="d-flex flex-column align-items-center">
+  <h1>Tic-Tac-Toe</h1>
+  <img src="../img/tic-tac-toe.png" alt="" width="150" height="150">
+
+  <main class="form-signin text-center">
+    <form>
+      <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+
+      <div class="form-floating">
+        <input type="text" class="form-control" id="username" required>
+        <label for="username">Username</label>
+      </div>
+      <div class="form-floating">
+        <input type="password" class="form-control" id="password" required>
+        <label for="password">Password</label>
+      </div>
+
+      <div id="error" class="mt-3 alert alert-danger fade">
+      </div>
+
+      <button id="submit" class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
+    </form>
+  </main>
+
+
+  <div id="loader">
+    <img src="../img/loader.svg" alt="loader">
+  </div>
+
+</body>
+
+</html>
