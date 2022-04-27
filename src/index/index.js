@@ -31,10 +31,10 @@ async function peticion(user, pass) {
         const { access_token, player_id } = result;
         sessionStorage.setItem("authorization", `Bearer ${access_token}`);
 
-        if (sessionStorage.getItem("previousPage")) {
-            window.location.href = sessionStorage.getItem("previousPage");
-        } else {
+        if (!sessionStorage.getItem("previousPage")) {
             window.location.href = `/list.html?player=${player_id}`;
+        } else {
+            window.location.href = sessionStorage.getItem("previousPage");
         }
 
     }
