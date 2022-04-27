@@ -2,37 +2,17 @@ import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './list.css';
 import '../common/common.css';
+import { _BASE_URL, doFetch } from '../common/common';
 
 
-const _BASE_URL = 'https://dwec-tres-en-raya.herokuapp.com'
 let params = new URLSearchParams(location.search);
 const idPage = params.get('player');
-const token = sessionStorage.getItem("authorization");
 const urlName = `${_BASE_URL}/player/${idPage}`;
 const urlIdGame = `${_BASE_URL}/player/${idPage}/games`;
+sessionStorage.setItem('previousPage', window.location.href);
 
 
-async function doFetch(url) {
-
-    try {
-        const response = await fetch(url, {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'authorization': token
-            },
-        })
-        if (response.status == 401) window.location.href = `/index.html`;
-        if (response.status != 200 || !response.ok) throw new Error(response.status);
-
-        return response.json();
-    } catch (error) {
-        console.log(error.message);
-    }
-}
-
-
+/*ASYNCRONOUS CALLING*/
 async function resolveGames(url) {
     const idGame = await doFetch(url);
     let responseGames = [];
@@ -51,8 +31,73 @@ async function init(urlGames, urlNames) {
 }
 
 
-function createTable(partida, line, i) {
+/*AUXILIAR FUNCTIONS TO CREATE HTML CODE FOR SHOWING GAMES*/
 
+/*Create principal <ol> element*/
+function createOl() {
+    const ol = document.createElement('ol');
+    ol.classList.add("game", "m-3");
+    document.getElementById('game-list').appendChild(ol);
+    return ol;
+}
+
+/* Create <div> container for title of each game */
+function createDivCard(ol) {
+    const divCard = document.createElement('div');
+    divCard.classList.add("card", "p-1");
+    ol.appendChild(divCard);
+    return divCard;
+}
+
+function createGameInfo(divCard) {
+    const gameInfo = document.createElement('h5');
+    gameInfo.classList.add("game-info");
+    divCard.appendChild(gameInfo);
+    return gameInfo;
+}
+
+function dateFormat(dateConst) {
+    const options = new Intl.DateTimeFormat("es-ES", {
+        timeStyle: 'short',
+        dateStyle: 'short'
+    });
+    return options.format(dateConst);
+}
+
+function setDate(date, divCard) {
+    let dateConst = new Date(date);
+    dateConst = dateFormat(dateConst);
+    const dateGame = document.createElement('div');
+    dateGame.classList.add("date");
+    dateGame.innerHTML = dateConst;
+    divCard.appendChild(dateGame);
+    return dateGame;
+}
+
+
+/* Create board-card for each game */
+function createGeneralTable(ol) {
+    const generalTable = document.createElement('div');
+    generalTable.classList.add("card", "mt-1", "p-2", "align-items-center");
+    ol.appendChild(generalTable);
+    return generalTable;
+}
+
+function createPreview(generalTable) {
+    const preview = document.createElement('div');
+    preview.classList.add('preview');
+    generalTable.appendChild(preview);
+    return preview;
+}
+
+function createLine(preview) {
+    const line = document.createElement('div');
+    line.classList.add('line');
+    preview.appendChild(line);
+    return line;
+}
+
+function createTable(partida, line, i) {
     for (let j = 0; j < partida[i].length; j++) {
         const cell = document.createElement('div');
         cell.classList.add('cell');
@@ -73,89 +118,66 @@ function createTable(partida, line, i) {
     }
 }
 
-
-function formatoFecha(fecha) {
-    const options = new Intl.DateTimeFormat("es-ES", {
-        timeStyle: 'short',
-        dateStyle: 'short'
+function viewGameButton(id, mov, generalTable) {
+    const viewGame = document.createElement('button');
+    viewGame.classList.add("btn", "btn-smttt", "btn-primary", "view-button");
+    viewGame.setAttribute("data-game", id);
+    viewGame.textContent = "View Game";
+    viewGame.addEventListener("click", () => {
+        window.location.href = `/game.html?game=${id}&movement=${mov}`;
     });
-    return options.format(fecha);
+    generalTable.appendChild(viewGame);
+    return viewGame;
 }
 
-init(urlIdGame, urlName).then(function (data) {
-    document.getElementById('loader').classList.add('active');
-    const datos = data.flat();
-    const h1 = document.getElementById('player-name');
+/*When no games exists*/
+function noGames() {
+    const ol = createOl();
+    const divCard = createDivCard(ol);
+    const gameInfo = createGameInfo();
+    divCard.appendChild(gameInfo);
+    return gameInfo;
+}
 
-    datos.forEach((elemento) => {
-        Object.entries(elemento).forEach(([key, value]) => {
-            if (key === 'name') h1.innerHTML = value;
-        })
-    });
+/* INIT CALLING */
+init(urlIdGame, urlName)
+    .then(function (data) {
 
-    let i = 0;
-    do {
-        const { id, date, result: partida, first_movement: mov } = datos[i];
+        document.getElementById('loader').classList.add('active');
+        let [games, user] = data;
+        document.getElementById('player-name').innerHTML = user.name;
 
-        const gameList = document.getElementById('game-list');
-        const ol = document.createElement('ol');
-        ol.classList.add("game", "m-3");
-        gameList.appendChild(ol);
-
-        const divCard = document.createElement('div');
-        divCard.classList.add("card", "p-1");
-        ol.appendChild(divCard);
-
-        const gameInfo = document.createElement('h5');
-        gameInfo.classList.add("game-info");
-        divCard.appendChild(gameInfo);
-        if (!date) {
+        if (games.length == 0) {
+            const gameInfo = noGames();
             gameInfo.innerHTML = "No games";
             document.getElementById('loader').classList.remove('active');
             return;
-        } else {
-            let fecha = new Date(date);
-            fecha = formatoFecha(fecha);
+        }
+
+        let i = 0;
+        while (i < (games.length)) {
+
+            const { id, date, result: partida, first_movement: mov } = games[i];
+            const ol = createOl();
+            const divCard = createDivCard(ol);
+            const gameInfo = createGameInfo(divCard);
 
             gameInfo.innerHTML = `Game #${id}`;
-            const dateGame = document.createElement('div');
-            dateGame.classList.add("date");
-            divCard.appendChild(dateGame);
-            dateGame.innerHTML = (fecha);
-            const generalTable = document.createElement('div');
-            generalTable.classList.add("card", "mt-1", "p-2", "align-items-center");
-            ol.appendChild(generalTable);
+            setDate(date, divCard);
 
-            const preview = document.createElement('div');
-            preview.classList.add('preview');
-            generalTable.appendChild(preview);
+            const generalTable = createGeneralTable(ol);
+            const preview = createPreview(generalTable);
 
             for (let i = 0; i < partida.length; i++) {
-                const line = document.createElement('div');
-                line.classList.add('line');
-                preview.appendChild(line);
+                const line = createLine(preview);
                 createTable(partida, line, i);
             }
+            viewGameButton(id, mov, generalTable);
 
-            const viewGame = document.createElement('button');
-            viewGame.classList.add("btn", "btn-smttt", "btn-primary", "view-button");
-            viewGame.setAttribute("data-game", id);
-            viewGame.textContent = "View Game";
-            viewGame.addEventListener("click", () => {
-                window.location.href = `/game.html?game=${id}&movement=${mov}`;
-            });
-            generalTable.appendChild(viewGame);
+            i++;
         }
-        i++;
-    } while (i < (datos.length - 1));
-    document.getElementById('loader').classList.remove('active');
-})
+        document.getElementById('loader').classList.remove('active');
+    })
     .catch((error) => {
         console.log(error);
     })
-
-
-
-
-
-

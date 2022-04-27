@@ -2,18 +2,16 @@ import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../common/common.css';
 import './game.css';
-
+import { _BASE_URL, doFetch } from '../common/common';
 
 const params = new URLSearchParams(location.search);
 const idGame = params.get('game');
 const next = params.get('movement');
-const _BASE_URL = 'https://dwec-tres-en-raya.herokuapp.com'
-const token = sessionStorage.getItem("authorization");
 const urlMov1 = `${_BASE_URL}/game/${idGame}/movements/${next}`;
-
+let movs = [];
 const nextButton = document.querySelector('#next');
 const backButton = document.querySelector('#back');
-
+sessionStorage.setItem('previousPage', window.location.href);
 
 document.getElementById('game-id').innerHTML = idGame;
 document.getElementById('return').addEventListener('click', () => {
@@ -21,40 +19,38 @@ document.getElementById('return').addEventListener('click', () => {
 }, false);
 
 
-async function doFetch(url) {
-    try {
-        const response = await fetch(url, {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'authorization': token
-            },
-        })
-        if (response.status == 401) window.location.href = `/index.html`;
-        if (response.status != 200 || !response.ok) throw (response.status);
-        return response.json();
-    } catch (error) {
-        console.log(error);
-    }
-}
-
-
-function dibujaNext(arrayMovimientos, iterador) {
+/*DRAWING GAME MOVEMENTS*/
+function dibujaNext(arrayMovs, iterator) {
     let dibujo;
-    (iterador % 2 === 0) ? dibujo = 'x' : dibujo = 'o';
-    const [row, column] = arrayMovimientos[iterador];
+    (iterator % 2 === 0) ? dibujo = 'x' : dibujo = 'o';
+    const [row, column] = arrayMovs[iterator];
     document.querySelector(`[data-row='${row}'][data-column='${column}']`).innerHTML = dibujo;
 }
 
-
-function dibujaBack(arrayMovimientos, iterador) {
-    const [row, column] = arrayMovimientos[iterador];
+function dibujaBack(arrayMovs, iterator) {
+    const [row, column] = arrayMovs[iterator];
     const fila = document.querySelector(`[data-row='${row}'][data-column='${column}']`);
     fila.innerHTML = '';
 }
 
+function buttonsFuncionality() {
+    let i = 1;
+    nextButton.addEventListener('click', () => {
+        dibujaNext(movs, i++);
+        if (i >= movs.length) nextButton.disabled = true;
+        backButton.disabled = false;
+    })
 
+    backButton.addEventListener('click', () => {
+        i--;
+        dibujaBack(movs, i);
+        if (i < 2) backButton.disabled = true;
+        nextButton.disabled = false;
+    })
+}
+
+
+/* ASYNCRONOUS CALLING */
 async function resolveGame(url) {
     document.getElementById('loader').classList.add('active');
     const response = await doFetch(url);
@@ -63,8 +59,7 @@ async function resolveGame(url) {
     const fila = document.querySelector(`[data-row='${row}'][data-column='${column}']`);
     fila.innerHTML = 'x';
 
-    let movimientos = [];
-    movimientos.push(movement);
+    movs.push(movement);
 
     document.getElementById('loader').classList.remove('active');
 
@@ -72,25 +67,10 @@ async function resolveGame(url) {
         const urlMov = `${_BASE_URL}/game/${idGame}/movements/${next}`;
         const response = await doFetch(urlMov);
         ({ movement, next } = response);
-        movimientos.push(movement);
+        movs.push(movement);
+        nextButton.disabled = false;
     }
-    let i = 1;
-    nextButton.disabled = false;
-    nextButton.addEventListener('click', () => {
-        dibujaNext(movimientos, i++);
-        if (i >= movimientos.length) nextButton.disabled = true;
-        backButton.disabled = false;
-    })
-
-    backButton.addEventListener('click', () => {
-        i--;
-        dibujaBack(movimientos, i);
-        if (i < 2) backButton.disabled = true;
-    })
 }
 
+buttonsFuncionality();
 resolveGame(urlMov1);
-
-
-
-
